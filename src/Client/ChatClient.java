@@ -54,7 +54,7 @@ public class ChatClient {
 //            } else {
 //                System.err.println("Login failed");
 //            }
-//            client.startMessageReader();
+            //client.startMessageReader();
             //client.logoff();
         }
     }

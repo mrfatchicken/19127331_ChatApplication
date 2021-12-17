@@ -7,7 +7,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="9dfba" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="9dfba" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints border-constraint="West"/>
         <properties/>
@@ -23,20 +23,12 @@
           </component>
           <vspacer id="d70e6">
             <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
             </constraints>
           </vspacer>
-          <component id="fde5c" class="javax.swing.JButton" binding="button2" default-binding="true">
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Button"/>
-            </properties>
-          </component>
           <component id="91f0e" class="javax.swing.JButton" binding="logoff">
             <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text value="Logoff"/>
@@ -44,10 +36,12 @@
           </component>
           <component id="d9f89" class="javax.swing.JTextField" binding="usernameTextField">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <caretColor color="-16777216"/>
               <editable value="false"/>
+              <foreground color="-15394881"/>
               <text value=""/>
             </properties>
           </component>
@@ -59,16 +53,7 @@
           <preferredSize width="300" height="400"/>
         </properties>
         <border type="none"/>
-        <children>
-          <scrollpane id="1de01" binding="js">
-            <constraints border-constraint="Center"/>
-            <properties>
-              <preferredSize width="300" height="400"/>
-            </properties>
-            <border type="none"/>
-            <children/>
-          </scrollpane>
-        </children>
+        <children/>
       </grid>
       <component id="70b74" class="javax.swing.JTextField" binding="Status">
         <constraints border-constraint="North"/>

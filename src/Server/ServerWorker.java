@@ -166,7 +166,7 @@ public class ServerWorker extends Thread {
                 System.out.println("User logged in succesfully: " + login);
 
                 List<ServerWorker> workerList = server.getWorkerList();
-
+                System.out.println(login + " online");
                 // send current user all other online logins
                 for(ServerWorker worker : workerList) {
                     if (worker.getLogin() != null) {
