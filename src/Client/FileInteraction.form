@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="Client.FileInteraction">
+  <grid id="27dc6" binding="content" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="20" width="500" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="7b557" class="javax.swing.JButton" binding="download">
+        <constraints border-constraint="South"/>
+        <properties>
+          <horizontalTextPosition value="0"/>
+          <text value="Download"/>
+        </properties>
+      </component>
+      <component id="1227a" class="javax.swing.JTextPane" binding="status">
+        <constraints border-constraint="North"/>
+        <properties>
+          <editable value="false"/>
+          <focusable value="true"/>
+          <font name="Consolas" size="14" style="1"/>
+          <foreground color="-16182132"/>
+        </properties>
+      </component>
+      <grid id="a22e5" binding="fileListPane" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="Center"/>
+        <properties>
+          <preferredSize width="300" height="400"/>
+        </properties>
+        <border type="none"/>
+        <children/>
+      </grid>
+    </children>
+  </grid>
+</form>

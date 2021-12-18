@@ -12,9 +12,12 @@ public class ChatClient {
     private InputStream serverIn;
     private OutputStream serverOut;
     private BufferedReader bufferedIn;
-
+    private boolean runnable = true;
     private ArrayList<UserStatusListener> userStatusListeners = new ArrayList<>();
     private ArrayList<MessageListener> messageListeners = new ArrayList<>();
+    private ArrayList<FileInteract> fileListeners = new ArrayList<>();
+    private String username;
+    Thread t;
 
     public ChatClient(String serverName, int serverPort) {
         this.serverName = serverName;
@@ -41,7 +44,12 @@ public class ChatClient {
                 System.out.println("You got a message from " + fromLogin + " ===>" + msgBody);
             }
         });
-
+        client.addFileInteractListener(new FileInteract() {
+            @Override
+            public void onFileNotice(String fromLogin, String filename) {
+                System.out.println("You got a file from " + fromLogin + " named " + filename);
+            }
+        });
         if (!client.connect()) {
             System.err.println("Connect failed.");
         } else {
@@ -84,6 +92,7 @@ public class ChatClient {
         System.out.println("Response Line:" + response);
 
         if ("ok login".equalsIgnoreCase(response)) {
+            this.username = login;
             return true;
         } else {
             return false;
@@ -94,13 +103,90 @@ public class ChatClient {
         String cmd = "logoff\n";
         serverOut.write(cmd.getBytes());
     }
+    public void quit() throws Exception {
+        String cmd = "quit\n";
+        serverOut.write(cmd.getBytes());
+    }
+    public void upload(String login, String filename) throws IOException, InterruptedException {
+        Socket socketUpload = new Socket(serverName, serverPort);
+        OutputStream out = socketUpload.getOutputStream();
+        InputStream in = socketUpload.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
+        String cmd = "upload " +username + " "+ login + " "+ filename + "\n";
+        out.write(cmd.getBytes());
+        reader.readLine();
+        File file = new File(filename);
+        FileInputStream fis = new FileInputStream(file);
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        byte[] contents;
+        long fileLength = file.length();
+        out.write((fileLength + "\n").getBytes());
+        reader.readLine();
+        long current = 0;
+        long start = System.nanoTime();
+        while(current != fileLength){
+            int size = 10000;
+            if (fileLength - current > size){
+                current += size;
+            }
+            else {
+                size = (int) (fileLength - current);
+                current = fileLength;
+            }
+            contents = new byte[size];
+            bis.read(contents,0,size);
+            out.write(contents);
+            System.out.print("Sending file ... "+(current*100)/fileLength+"% complete!\n");
+        }
+        out.flush();
+        String sre  = "logoff\n";
+        out.write(sre.getBytes());
+        bis.close();
+        fis.close();
+    }
+    public void download(String filename) throws IOException {
+        Socket socketDownload = new Socket(serverName, serverPort);
+        OutputStream out = socketDownload.getOutputStream();
+        InputStream in = socketDownload.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+        String cmd = "download " + filename + "\n";
+        out.write(cmd.getBytes());
+        FileOutputStream fos = new FileOutputStream("ClientFiles/"+filename);
+        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        long fileLength = Long.parseLong(reader.readLine());
+        System.out.println(fileLength);
+        out.write("ok\n".getBytes());
+        byte[] contents;
+        int bytesRead = 0;
+        long current = 0;
+        while (current != fileLength){
+            int size  = 10000;
+            if(fileLength -current >= size){
+                current += size;
+            }
+            else {
+                size = (int)(fileLength - current);
+                current = fileLength;
+            }
+            contents = new byte[size];
+            bytesRead = in.read(contents);
+            bos.write(contents, 0 ,bytesRead);
+        }
+        bos.flush();
+        String sre  = "logoff\n";
+        out.write(sre.getBytes());
+        bos.close();
+        fos.close();
+    }
     public void startMessageReader() {
-        Thread t = new Thread() {
+        t = new Thread() {
             @Override
             public void run() {
-                while (true) {readMessageLoop();}
+                readMessageLoop();
             }
+
         };
         t.start();
     }
@@ -108,7 +194,8 @@ public class ChatClient {
     public void readMessageLoop() {
         try {
             String line;
-            while ((line = bufferedIn.readLine()) != null) {
+            while ((line = bufferedIn.readLine()) != null && runnable) {
+                System.out.println("Hello");
                 String[] tokens = line.split(" ");
                 if (tokens != null && tokens.length > 0) {
                     String cmd = tokens[0];
@@ -119,6 +206,9 @@ public class ChatClient {
                     } else if ("msg".equalsIgnoreCase(cmd)) {
                         String[] tokensMsg = line.split(" ", 3);
                         handleMessage(tokensMsg);
+                    } else if ("file".equalsIgnoreCase(cmd)) {
+                        String[] tokensMsg = line.split(" ", 3);
+                        handleFile(tokensMsg);
                     }
                 }
             }
@@ -129,6 +219,14 @@ public class ChatClient {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void handleFile(String[] tokensMsg) {
+        String login = tokensMsg[1];
+        String filename = tokensMsg[2];
+        for(FileInteract listener: fileListeners){
+            listener.onFileNotice(login, filename);
         }
     }
 
@@ -183,6 +281,13 @@ public class ChatClient {
 
     public void removeMessageListener(MessageListener listener) {
         messageListeners.remove(listener);
+    }
+    public void addFileInteractListener(FileInteract listener) {
+        fileListeners.add(listener);
+    }
+
+    public void removeFileInteractListener(FileInteract listener) {
+        fileListeners.remove(listener);
     }
 
 }

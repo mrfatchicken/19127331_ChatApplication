@@ -4,6 +4,8 @@ package Server;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -15,10 +17,13 @@ public class ServerWorker extends Thread {
 
     private final Socket clientSocket;
     private final Server server;
-    private String login = null;
+    private String login = "null";
     private OutputStream outputStream;
     private HashSet<String> topicSet = new HashSet<>();
     private UserList list;
+    private InputStream inputStream;
+    private BufferedReader reader;
+
     public ServerWorker(Server server, Socket clientSocket, UserList list) {
         this.server = server;
         this.clientSocket = clientSocket;
@@ -37,20 +42,22 @@ public class ServerWorker extends Thread {
     }
 
     private void handleClientSocket() throws IOException, InterruptedException {
-        InputStream inputStream = clientSocket.getInputStream();
+        this.inputStream = clientSocket.getInputStream();
         this.outputStream = clientSocket.getOutputStream();
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        this.reader = new BufferedReader(new InputStreamReader(inputStream));
         String line;
         while ( (line = reader.readLine()) != null) {
             String[] tokens = line.split(" ");
-            System.out.println(line);
+            System.out.println(login + " : " + line);
 
             if (tokens != null && tokens.length > 0) {
                 String cmd = tokens[0];
-                if ("logoff".equals(cmd) || "quit".equalsIgnoreCase(cmd)) {
+                if ("logoff".equals(cmd)) {
                     handleLogoff();
                     break;
+                } else if ("quit".equalsIgnoreCase(cmd)) {
+                    handleQuit();
                 } else if ("login".equalsIgnoreCase(cmd)) {
                     handleLogin(outputStream, tokens);
                 } else if ("msg".equalsIgnoreCase(cmd)) {
@@ -62,6 +69,10 @@ public class ServerWorker extends Thread {
                     handleLeave(tokens);
                 } else if ("register".equalsIgnoreCase(cmd)) {
                     handleRegister(tokens);
+                } else if ("download".equalsIgnoreCase(cmd)) {
+                    handleDownload(tokens);
+                } else if ("upload".equalsIgnoreCase(cmd)) {
+                    handleUpload(tokens);
                 } else {
                     String msg = "unknown " + cmd + "\n";
                     outputStream.write(msg.getBytes());
@@ -71,6 +82,88 @@ public class ServerWorker extends Thread {
 
         clientSocket.close();
     }
+    private void handleUpload(String[] tokens) throws IOException {
+        String owner = tokens[1];
+        String sendTo = tokens[2];
+        Path path = FileSystems.getDefault().getPath(tokens[3]);
+        String filename = path.getFileName().toString();
+
+        outputStream.write("ok\n".getBytes());
+        FileOutputStream fos = new FileOutputStream("ServerFiles/"+filename);
+        BufferedOutputStream bos = new BufferedOutputStream(fos);
+
+        long fileLength = Long.parseLong(reader.readLine());
+        System.out.println(filename + " size: " + fileLength);
+
+        outputStream.write("ok\n".getBytes());
+
+        byte[] contents;
+        int bytesRead = 0;
+        long current = 0;
+        while (current != fileLength){
+            int size  = 10000;
+            if(fileLength -current >= size){
+                current += size;
+            }
+            else {
+                size = (int)(fileLength - current);
+                current = fileLength;
+            }
+            contents = new byte[size];
+            bytesRead = inputStream.read(contents);
+            bos.write(contents, 0 ,bytesRead);
+        }
+        bos.flush();
+        bos.close();
+        fos.close();
+        boolean isTopic = sendTo.charAt(0) == '#';
+        List<ServerWorker> workerList = server.getWorkerList();
+        for(ServerWorker worker : workerList) {
+            if (isTopic) {
+                if (worker.isMemberOfTopic(sendTo)) {
+                    String outMsg = "file " + sendTo + ":" + owner + " " + filename + "\n";
+                    worker.send(outMsg);
+                }
+            } else {
+                if (sendTo.equalsIgnoreCase(worker.getLogin())) {
+                    String outMsg = "file " + owner + " " + filename + "\n";
+                    worker.send(outMsg);
+                }
+            }
+        }
+
+    }
+    private void handleDownload(String[] tokens) throws IOException{
+        String filename = tokens[1];
+        File file = new File("ServerFiles/"+filename);
+        FileInputStream fis = new FileInputStream(file);
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        byte[] contents;
+        long fileLength = file.length();
+        outputStream.write((fileLength + "\n").getBytes());
+        reader.readLine();
+        long current = 0;
+        long start = System.nanoTime();
+        while(current != fileLength){
+            int size = 10000;
+            if (fileLength - current > size){
+                current += size;
+            }
+            else {
+                size = (int) (fileLength - current);
+                current = fileLength;
+            }
+            contents = new byte[size];
+            bis.read(contents,0,size);
+            outputStream.write(contents);
+            System.out.print("Sending file ... "+(current*100)/fileLength+"% complete!\n");
+
+        }
+        outputStream.flush();
+        bis.close();
+        fis.close();
+    }
+
 
     private void handleRegister(String[] tokens) throws IOException {
         if (tokens.length == 3) {
@@ -141,12 +234,18 @@ public class ServerWorker extends Thread {
         List<ServerWorker> workerList = server.getWorkerList();
 
         // send other online users current user's status
-        String onlineMsg = "offline " + login + "\n";
-        for(ServerWorker worker : workerList) {
-            if (!login.equals(worker.getLogin())) {
-                worker.send(onlineMsg);
+        if (login != "null") {
+            String onlineMsg = "offline " + login + "\n";
+            for (ServerWorker worker : workerList) {
+                if (!login.equals(worker.getLogin())) {
+                    worker.send(onlineMsg);
+                }
             }
         }
+        clientSocket.close();
+    }
+    private void handleQuit() throws IOException{
+        server.removeWorker(this);
         clientSocket.close();
     }
 
@@ -169,7 +268,7 @@ public class ServerWorker extends Thread {
                 System.out.println(login + " online");
                 // send current user all other online logins
                 for(ServerWorker worker : workerList) {
-                    if (worker.getLogin() != null) {
+                    if (worker.getLogin() != "null") {
                         if (!login.equals(worker.getLogin())) {
                             String msg2 = "online " + worker.getLogin() + "\n";
                             send(msg2);

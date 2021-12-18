@@ -7,7 +7,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="330f6" binding="messagePane" layout-manager="GridBagLayout">
+      <grid id="330f6" binding="messagePane" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
@@ -34,17 +34,26 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <background color="-1"/>
+          <background color="-1445152"/>
         </properties>
         <border type="none"/>
         <children>
           <component id="35e0a" class="javax.swing.JButton" binding="sendFile">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
               <text value="Send file"/>
+            </properties>
+          </component>
+          <component id="10f3" class="javax.swing.JButton" binding="fileInteractButton">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text value="Files"/>
             </properties>
           </component>
         </children>

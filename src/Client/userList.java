@@ -1,11 +1,10 @@
 package Client;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Objects;
 
 public class userList extends JFrame implements UserStatusListener{
     public JPanel content;
@@ -19,6 +18,7 @@ public class userList extends JFrame implements UserStatusListener{
     private ChatClient client;
     private DefaultListModel<String> userListModel;
     private String username;
+    private ArrayList<Message> messageArrayList = new ArrayList<Message>();
 
     public userList(ChatClient client, String username){
         JFrame jf = this;
@@ -63,20 +63,65 @@ public class userList extends JFrame implements UserStatusListener{
         this.client.addUserStatusListener(this);
         client.startMessageReader();
         this.setContentPane(content);
+        this.setTitle(username);
         this.pack();
         this.setVisible(true);
         System.out.println("GUI online set up");
+        chat.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(list1.getSelectedValue() != null){
+                    String target = (String) list1.getSelectedValue();
+                    boolean flag = true;
+                    for (Message item: messageArrayList){
+                        if (Objects.equals(item.getTarget(), target)){
+                            item.setVisible(true);
+                            flag = false;
+                        }
+                    }
+                    if (flag) {
+                        Message message = new Message(client, username, target);
+                        message.setVisible(true);
+                        messageArrayList.add(message);
+                    }
+                }
+            }
+        });
+        list1.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() > 1){
+                    if(list1.getSelectedValue() != null){
+                        String target = (String) list1.getSelectedValue();
+                        boolean flag = true;
+                        for (Message item: messageArrayList){
+                            if (Objects.equals(item.getTarget(), target)){
+                                item.setVisible(true);
+                                flag = false;
+                            }
+                        }
+                        if (flag) {
+                            Message message = new Message(client, username, target);
+                            message.setVisible(true);
+                            messageArrayList.add(message);
+                        }
+                    }
+                }
+            }
+        });
     }
 
 
     @Override
     public void online(String login) {
         System.out.println("GUI online "+ login);
+        messageArrayList.add(new Message(client, username, login));
         userListModel.addElement(login);
     }
 
     @Override
     public void offline(String login) {
         userListModel.removeElement(login);
+        messageArrayList.removeIf(item -> Objects.equals(item.getTarget(), login));
     }
 }
